@@ -38,13 +38,27 @@ def main(database, table, chunks, verbose=False, defaults=False, user=False, pas
 	else:
 		batchitup.mysql_dump(database, table, user=user, password=password)
 
+	insertPattern = "INSERT INTO"
+	deletePattern = "DELETE"
+	resultFile = "batchitup.sql"
+
+	if (check_file_exists(resultFile)):
+		batchitup.grep_file(resultFile, insertPattern)
+
+	if not (os.path.exists("inserts")):
+		os.makedirs("inserts")
+
+	
+
 if (__name__ == "__main__"):
-	parser = argparse.ArgumentParser(description="Arguments for BatchItUp")
+	parser = argparse.ArgumentParser(description="Arguments for BatchItUp", allow_abbrev=True)
 	parser.add_argument("-c", "--defaults", default=False)
 	parser.add_argument("-u", "--user", default=False)
 	parser.add_argument("-p", "--password", default=False)
-	parser.add_argument("-d", "--database", default=False)
-	parser.add_argument("-t", "--table", default=False)
+	parser.add_argument("-d", "--database", default=False, required=True)
+	parser.add_argument("-t", "--table", default=False, required=True)
+	parser.add_argument("-i", "--inserts", default=True, action="store_true")
+	parser.add_argument("-x", "--deletes", default=False, action="store_true")
 	parser.add_argument("-s", "--chunk", default=500)
 	parser.add_argument("-v", "--verbose", action="store_true")
 	parser.add_argument("-l", "--log", default="./batchitup.log")
@@ -61,8 +75,6 @@ if (__name__ == "__main__"):
 	logger.addHandler(logger_handler)
 	logger.info("Completed configuring logging")
 
-	print(args.defaults, args.user, args.password, args.database, args.table, args.chunk, args.verbose, args.log)
-
 	'''
 	Check if the user entered in a path and filename to a defaults file or if they
 	prefer to use a username and password combo for access to MySQL. Log responses,
@@ -75,6 +87,7 @@ if (__name__ == "__main__"):
 			logger.info("Starting program on table: %s on %s : chunking by: %d" % (args.database, args.table, args.chunk))
 			main(args.database, args.table, args.chunk, defaults=args.defaults)
 	elif ((check_str(args.user)) and  (check_str(args.password))):
+		logger.info("Using the user and password %s" % args.defaults)
 		if ((check_str(args.database)) and (check_str(args.table))):
 			logger.info("Starting program on table: %s on %s : chunking by: %d" % (args.database, args.table, args.chunk))
 			main(args.database, args.table, args.chunk, user=args.user, password=args.password)
